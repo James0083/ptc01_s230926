@@ -1,0 +1,27 @@
+{
+  "name": "ptc01_s230926",
+  "version": "1.0.0",
+  "description": "",
+  "main": "ptc01_s230926.js",
+  "scripts": {
+    "test": "jest",
+    "got": "ts-node ./http-got-test.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/got": "^9.6.12",
+    "got": "^11.8.6",
+    "http": "^0.0.1-security",
+    "mongodb": "^6.1.0",
+    "mongoose": "^7.6.1",
+    "node-schedule": "^2.1.1",
+    "typescript": "^5.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.7.0",
+    "@types/node-schedule": "^2.1.1",
+    "jest": "^29.7.0",
+    "tslib": "^2.6.2"
+  }
+}
