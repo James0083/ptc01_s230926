@@ -1,4 +1,4 @@
-const { connectDB, disconnectDB, insertLog } = require('./ptc01_db');
+const { connectDB, disconnectDB, insertLog, saveDataToCandleLogCollection } = require('./ptc01_db');
 
 interface Logger {
   log(message: string): void;
@@ -12,8 +12,8 @@ class ConsoleLogger implements Logger {
 
 class ErrorLogger implements Logger{
     log(message: string): void{
-        console.log(message);
-        connectDB().then(insertLog(message)).then(disconnectDB());
+        console.error(message);
+        saveDataToCandleLogCollection(message);
     }
 }
 
@@ -25,3 +25,4 @@ class FileLogger implements Logger {
 }
 
 export const consoleLogger = new ConsoleLogger();
+export const errorLogger = new ErrorLogger();
