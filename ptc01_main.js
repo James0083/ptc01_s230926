@@ -18,14 +18,16 @@ const got_1 = __importDefault(require("got"));
 const ptc01_logger_1 = require("./ptc01_logger");
 const ptc01_db_1 = require("./ptc01_db");
 const ptc01_slack_web_hook_1 = require("./ptc01_slack_web_hook");
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const mongoUser = 'dnsever';
 const mongoUserPw = 'dnsever_pw';
 const connectionString = `mongodb://${mongoUser}:${mongoUserPw}@localhost:27017/candle`;
 //DB 연결
 (0, ptc01_db_1.connectDB)(connectionString);
 let cnt = 0;
-let retry_cnt = 0;
+let retryLeft = 3;
+const MAX_RETRIES = 3;
+const RETRY_INTERVALS = [10 * 1000, 20 * 1000, 30 * 1000];
 let candleDataSet = new Set();
 // const interval:string = '1m';
 // const sort:string = 'desc';
@@ -41,6 +43,14 @@ function sendGetRequest(start_time, end_time, interval = '1m', sort = 'desc', li
                 responseType: 'json'
             });
             ptc01_logger_1.consoleLogger.log('statusCode : ' + response.statusCode);
+            // 성공적인 응답인 경우
+            if (response.statusCode === 200) {
+                // 데이터를 저장하는 로직을 추가
+                ptc01_logger_1.consoleLogger.log('Data fetched successfully.');
+            }
+            else {
+                ptc01_logger_1.errorLogger.log(`Failed to fetch data. Status code: ${response.statusCode}`);
+            }
             let rBody = JSON.parse(JSON.stringify(response.body));
             let rBodyData = rBody.data;
             monitoring_responseJSON(rBodyData);
@@ -50,20 +60,21 @@ function sendGetRequest(start_time, end_time, interval = '1m', sort = 'desc', li
             ptc01_logger_1.consoleLogger.log('candleDataSet Size: ' + candleDataSet.size);
             ptc01_logger_1.consoleLogger.log("==============cnt: " + (++cnt) + "==============");
             // saveDataToCandleLogCollection("success!");
-            return new Promise((resolve) => {
-                // resolve(response.body);
-                resolve(response);
-                // resolve(rBodyData);
-            });
+            // return new Promise((resolve) => {
+            //     // resolve(response.body);
+            //     resolve(response);
+            //     // resolve(rBodyData);
+            // })
         }
         catch (error) {
-            let errorString = '[SendGetRequest Error] ' + error;
+            let errorString = `[SendGetRequest Error] ${error}`;
             (0, ptc01_db_1.saveDataToCandleLogCollection)(errorString);
             ptc01_logger_1.errorLogger.log(errorString);
-            retry_cnt += 1;
-            return new Promise((rejects) => {
-                rejects(error);
-            });
+            retryLeft -= 1;
+            // return new Promise((rejects) => {
+            //     rejects(error);
+            // })
+            throw error;
         }
     });
 }
@@ -101,36 +112,81 @@ exports.saveInDB = saveInDB;
 let date;
 //Batch 실행
 const requestBatch = node_schedule_1.default.scheduleJob('0 * * * * *', () => {
-    date = new Date();
-    date.setMilliseconds(1);
-    date.setSeconds(1);
-    let end_time = date.toISOString();
-    date.setMinutes(date.getMinutes() - 10);
-    let start_time = date.toISOString();
-    ptc01_logger_1.consoleLogger.log('running...');
-    ptc01_logger_1.consoleLogger.log('request time : ' + start_time + '~' + end_time);
-    let response = sendGetRequest(start_time, end_time).then((responseData) => {
-        // consoleLogger.log("response:", response.body);
-        // sendSlackNotification('test success message~ \n' + JSON.stringify(responseData));
-    }).catch((error) => {
-        let errString = "[requestBatch Error] " + error;
-        ptc01_logger_1.errorLogger.log(errString);
-        (0, ptc01_slack_web_hook_1.sendSlackNotification)(errString);
-    });
-    if (response.statusCode != 200) {
-        retry_cnt += 1;
-    }
-    if (response.statusCode == 500)
-        yield sleep(3000);
-    else if (response.statusCode == 502)
-        yield sleep(3000);
-    else if (response.statusCode == 504)
-        yield sleep(3000);
-    if (retry_cnt > 3) {
-        retry_cnt = 0;
-        return;
-    }
+    FetchJob(MAX_RETRIES);
 });
+function FetchJob(retryLeft) {
+    return __awaiter(this, void 0, void 0, function* () {
+        date = new Date();
+        date.setMilliseconds(1);
+        date.setSeconds(1);
+        let end_time = date.toISOString();
+        date.setMinutes(date.getMinutes() - 10);
+        let start_time = date.toISOString();
+        ptc01_logger_1.consoleLogger.log('running...');
+        ptc01_logger_1.consoleLogger.log('request time : ' + start_time + '~' + end_time);
+        /*
+        if (retryLeft > 0) {
+            consoleLogger.log(`Retrying (${MAX_RETRIES - retryLeft + 1}/${MAX_RETRIES})...`);
+            let response = sendGetRequest(start_time, end_time).then((response:any) => {
+            
+            }).catch((error) => {
+                let errString = "[requestBatch Error] " + error
+                errorLogger.log(errString);
+                sendSlackNotification(errString);
+                
+                let retryInterval = 0;
+                if (error.message.includes('Status code: 500')){
+                    retryInterval = RETRY_INTERVALS[0];
+                } else if (error.message.includes('Status code: 502')) {
+                    retryInterval = RETRY_INTERVALS[1];
+                } else if(error.message.includes('Status code: 504')) {
+                    retryInterval = RETRY_INTERVALS[2];
+                }
+    
+                if (retryInterval > 0) {
+                    consoleLogger.log(`Retrying in ${retryInterval / 1000} seconds...`);
+                    await sleep(retryInterval);
+                    await FetchJob(retryLeft - 1);
+                } else {
+                    consoleLogger.log('Non-retryable error. Stopping retries.');
+                }
+            });
+        } else {
+            console.log('Maximum retries reached. Stopping retries.');
+        }
+        /**/
+        /////////////////////////////
+        let response = sendGetRequest(start_time, end_time).then((response) => {
+            retryLeft = MAX_RETRIES;
+        }).catch((error) => {
+            let errString = "[requestBatch Error] " + error;
+            ptc01_logger_1.errorLogger.log(errString);
+            (0, ptc01_slack_web_hook_1.sendSlackNotification)(errString);
+            let retryInterval = 0;
+            if (error.message.includes('Status code: 500')) {
+                retryInterval = RETRY_INTERVALS[0];
+            }
+            else if (error.message.includes('Status code: 502')) {
+                retryInterval = RETRY_INTERVALS[1];
+            }
+            else if (error.message.includes('Status code: 504')) {
+                retryInterval = RETRY_INTERVALS[2];
+            }
+            if (retryInterval > 0) {
+                ptc01_logger_1.consoleLogger.log(`Retrying in ${retryInterval / 1000} seconds...`);
+                sleep(retryInterval).then(() => FetchJob(retryLeft - 1));
+            }
+            else {
+                retryLeft = MAX_RETRIES;
+                ptc01_logger_1.consoleLogger.log('Non-retryable error. Stopping retries.');
+            }
+        });
+        if (retryLeft <= 0) {
+            retryLeft = MAX_RETRIES;
+            return;
+        }
+    });
+}
 //중복검사 (Set)
 function isObjectInSet(set, targetObj) {
     let found = false;
