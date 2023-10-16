@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Candle = void 0;
+exports.candleSchema = exports.Candle = void 0;
 const mongoose_1 = require("mongoose");
+var mongoose = require('mongoose');
 ;
 const candleSchema = new mongoose_1.Schema({
     market_id: { type: String, required: true },
@@ -14,5 +15,7 @@ const candleSchema = new mongoose_1.Schema({
     start_time: { type: String, required: true },
     end_time: { type: String, required: true }
 });
+exports.candleSchema = candleSchema;
+// candleSchema.index({ market_id: 1, start_time: 1, end_time: 1 }, { unique: true });
 const Candle = (0, mongoose_1.model)('Candle', candleSchema);
 exports.Candle = Candle;

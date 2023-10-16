@@ -20,4 +20,4 @@ const messageToSend = 'test message~~!';
 // sendSlackNotification(webhookUrl, messageToSend);
 // sendSlackNotification('test message in local~');
 
-module.exports = { sendSlackNotification };
+export { sendSlackNotification };

@@ -51,23 +51,3 @@ const Candle = model<candle_data, DBCandleModel>('Candle', candleSchema);
 
 export { Candle, candleSchema };
 
-    
-    
-    
-export interface student{
-    name: string;
-    address: string;
-    age: number;
-}
-
-interface DBStudentModel extends Model<student> { };
-
-const studentSchema = new Schema<student, DBStudentModel>({
-    name: { type: String, required: true },
-    address: { type: String, required: true },
-    age: { type: Number, required: true }
-});
-
-const Student1 = model<student, DBStudentModel>('Student1', studentSchema);
-
-export { Student1 };

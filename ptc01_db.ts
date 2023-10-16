@@ -20,12 +20,12 @@ function connectDB(connectionString:string) {
     var db = mongoose.connection;
     // 연결 실패
     db.on('error', function () {
-        console.log('Connection Failed!');
+        consoleLogger.log('Connection Failed!');
     });
     // 연결 성공
     db.once('open', function () {
         dbConnectFlag = true;
-        console.log('Connected!');
+        consoleLogger.log('Connected!');
     });
 }
 
@@ -58,9 +58,9 @@ const candleSchema: Schema = new Schema({
 var candle_data = mongoose.model<candle_data>('Candle', candleSchema);
 
 interface log_data extends Document{
-  log_time: string;
-  logMessage: string;
-}
+    log_time: string;
+    logMessage: string;
+};
 
 const LogSchema = new Schema({
     log_time: { type: String, required: true },
@@ -70,17 +70,6 @@ const LogSchema = new Schema({
 var log_message = mongoose.model<log_data>('CandleLog', LogSchema);
 
 async function saveDataToCandleCollection(cData: any) {
-    // candleDataSet.forEach(obj => console.log(obj));
-    // for (let cData of json_candle_data) {
-    //     if (!candleDataSet.has(cData)) {
-    //         try {
-    //             const data = await candle_data.create(cData);
-    //             candleDataSet.add(cData);
-    //         } catch (error) {
-    //             errorLogger.log("Duplicate data. Skipping...");
-    //         }
-    //     }
-    // }
     await candle_data.create(cData);
     // consoleLogger.log('Data saved to Collection Candle : ' + data);
 }
@@ -90,32 +79,18 @@ async function saveDataToCandleLogCollection(logMessage: string) {
     // consoleLogger.log('Data saved to Collection CandleLog : ' + data);
 }
 
-// async function insertData(json_candle_data: any) {
-//     // 객체를 new 로 생성해서 값을 입력
-//     var new_candle_data = new candle_data(json_candle_data);
-
-//     // 데이터 저장
-//     await new_candle_data.save().then(() => {
-        
-//         console.log("success");
-//     }).catch((err: Error) => {
-
-//         console.log("fail!!", err);
-//     });
-// }
 
 function getAllData() {
-    // connectDB();
-    // console.log("getAllData - connectDB ")
-    // 10. Student 레퍼런스 전체 데이터 가져오기
+    // consoleLogger.log("getAllData - connectDB ")
+    // 레퍼런스 전체 데이터 가져오기
     candle_data.find().then((candle_data: Object) => {
-        console.log('--- Read all ---');
+        consoleLogger.log('--- Read all ---');
 
-        console.log(candle_data);
+        consoleLogger.log(candle_data.toString());
         
         // disconnectDB();
     }).catch((err: Error) => {
-        console.log(err);
+        errorLogger.log(err.toString());
     });
 
 }
@@ -123,20 +98,16 @@ function getAllData() {
 function disconnectDB() {
     if (dbConnectFlag) {
         mongoose.disconnect();
-        console.log("Now disconnected!!")
+        consoleLogger.log("Now disconnected!!")
     } else {
-        console.log("DB is not connected!")
+        consoleLogger.log("DB is not connected!")
     }
 }
-
-// function insertLog(message:string) {
-//     message.save()
-// }
 
 // connectDB();
 // getAllData();
 
-module.exports = {
+export {
     connectDB,
     disconnectDB,
     // insertData,
