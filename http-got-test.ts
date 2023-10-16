@@ -19,9 +19,9 @@ async function sendGetRequest(end_time : string) {
       responseType: 'json'
     });
 
-    // let rb:Set<candle_data> = new Set<candle_data>(JSON.parse(JSON.stringify(response.body)).data);
+    let rBodyData = JSON.parse(JSON.stringify(response.body)).data;
+    // let rbdata:Set<candle_data> = new Set<candle_>(JSON.parse(JSON.stringify(response.body)).data);
     // console.log('Response body:', response.body);
-    // let rBody = JSON.parse(JSON.stringify(response.body)).data;
 
     // const setIterator = rb.entries();
  
@@ -33,9 +33,12 @@ async function sendGetRequest(end_time : string) {
     // console.log('Response body parse JSON : ', rBody[0], rBody[1], typeof (rBody));
 
     console.log('response-statusCode : ', response.statusCode, typeof(response.statusCode));
+
     // console.log('response-statusMessage : ', response.statusMessage);
     // console.log('responses: ', response);
     
+    console.log('Response body data type : ' + typeof (rBodyData));
+    console.log('Response body data : ' + rBodyData);
     // console.log('Response body data : ', typeof(rb));
     // let c: candle_data = JSON.parse(response.body.data[0]);
     // console.log('Response body:', typeof(response.body));
