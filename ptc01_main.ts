@@ -5,15 +5,14 @@ import { consoleLogger, errorLogger } from './ptc01_logger';
 import { rejects } from 'assert';
 // import { candle_data, connectDB, disconnectDB, insertData, getAllData, saveDataToCandleCollection, saveDataToCandleLogCollection } from './ptc01_db';
 import { candle_data } from './ptc01_db';
+import { connectDB, disconnectDB, getAllData, saveDataToCandleCollection, saveDataToCandleLogCollection } from './ptc01_db';
+import { sendSlackNotification } from './ptc01_slack_web_hook';
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-const { connectDB, disconnectDB, insertData, getAllData, saveDataToCandleCollection, saveDataToCandleLogCollection } = require('./ptc01_db');
-const { sendSlackNotification } = require('./ptc01_slack_web_hook');
 
 const mongoUser: string = 'dnsever';
 const mongoUserPw: string = 'dnsever_pw';
-// const connectionString: string = 'mongodb://' + mongoUser + ':' + mongoUserPw + '@localhost:27017/candles';
 const connectionString: string = `mongodb://${mongoUser}:${mongoUserPw}@localhost:27017/candle`;
 
 //DB 연결
@@ -46,18 +45,19 @@ async function sendGetRequest(start_time: string, end_time: string, interval: st
         let rBody = JSON.parse(JSON.stringify(response.body));
         let rBodyData = rBody.data;
         monitoring_responseJSON(rBodyData);
-        // console.log(rBodyData.length);
+        // consoleLogger.log(rBodyData.length);
 
         
         saveInDB(rBodyData);
 
-        // candleDataSet.forEach(obj => console.log(obj));
+        // candleDataSet.forEach(obj => consoleLogger.log(obj));
         consoleLogger.log('candleDataSet Size: ' + candleDataSet.size);
         consoleLogger.log("==============cnt: " + (++cnt) + "==============");
         // saveDataToCandleLogCollection("success!");
         return new Promise((resolve) => {
             // resolve(response.body);
-            resolve(rBodyData);
+            resolve(response);
+            // resolve(rBodyData);
         })
         
     } catch (error) {
@@ -101,8 +101,8 @@ function saveInDB(rBodyData: any) {
 }
 
 let date;
-// const requestBatch = schedule.scheduleJob('0 */10 * * * *', () => {
-const requestBatch = schedule.scheduleJob('* * * * * *', () => {
+//Batch 실행
+const requestBatch = schedule.scheduleJob('0 * * * * *', () => {
     date = new Date();
     date.setMilliseconds(1);
     date.setSeconds(1);
@@ -110,28 +110,26 @@ const requestBatch = schedule.scheduleJob('* * * * * *', () => {
     date.setMinutes(date.getMinutes() - 10);
     let start_time = date.toISOString();
 
-    console.log('running...');
-    console.log('request time : ' + start_time + '~' + end_time);
-    sendGetRequest(start_time, end_time).then((responseData) => {
-        // console.log("response:", response.body);
-        // sendSlackNotification('test success message~');
-        // sendSlackNotification('\n' + JSON.stringify(responseData));
+    consoleLogger.log('running...');
+    consoleLogger.log('request time : ' + start_time + '~' + end_time);
+    let response = sendGetRequest(start_time, end_time).then((responseData) => {
+        // consoleLogger.log("response:", response.body);
+        // sendSlackNotification('test success message~ \n' + JSON.stringify(responseData));
     }).catch((error) => {
         let errString = "[requestBatch Error] " + error
         errorLogger.log(errString);
         sendSlackNotification(errString);
     });
 
-    // if(response.statusCode!=200) { retry_cnt+=1; }
-    // if (response.statusCode == 500) await sleep(3000);
-    // else if (response.statusCode == 502) await sleep(3000);
-    // else if (response.statusCode == 504) await sleep(3000);
+    if(response.statusCode!=200) { retry_cnt+=1; }
+    if (response.statusCode == 500) await sleep(3000);
+    else if (response.statusCode == 502) await sleep(3000);
+    else if (response.statusCode == 504) await sleep(3000);
 
     if (retry_cnt > 3) {
         retry_cnt = 0;
         return;
     }
-    // setTimeout(() => console.log("cnt: "+(++cnt)+"=============="), 2000);
 })
 
 //중복검사 (Set)
@@ -156,8 +154,14 @@ function isObjectInSet(set: Set<candle_data>, targetObj: candle_data): boolean {
 setTimeout(() => {
     requestBatch.cancel()
     // getAllData();
-    
+    disconnectDB();
     // setTimeout(disconnectDB(),5000);
 }, 1000*60*60*3); //ms 후 종료
 
-    
+
+export {
+    sendGetRequest,
+    monitoring_responseJSON,
+    saveInDB,
+    isObjectInSet
+}
