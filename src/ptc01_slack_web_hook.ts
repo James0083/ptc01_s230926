@@ -1,9 +1,11 @@
-// https://hooks.slack.com/services/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
+// https://api.slack.com/apps/A0617J9C7HR/incoming-webhooks?success=1 에서 확인
+// https://hooks.slack.com/services/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
 
 import axios from 'axios';
+const webhookUrl = 'https://hooks.slack.com/services/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';  // Replace with your actual Slack webhook URL
 
 async function sendSlackNotification(message: string): Promise<void> {
-    let webhookUrl = 'https://hooks.slack.com/services/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';  // Replace with your actual Slack webhook URL
+    // let webhookUrl = 'https://hooks.slack.com/services/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';  // Replace with your actual Slack webhook URL
     try {
         await axios.post(webhookUrl, {
         text: message,
@@ -14,7 +16,6 @@ async function sendSlackNotification(message: string): Promise<void> {
     }
 }
 
-// const webhookUrl = 'https://hooks.slack.com/services/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';  // Replace with your actual Slack webhook URL
 const messageToSend = 'test message~~!';
 
 // sendSlackNotification(webhookUrl, messageToSend);
