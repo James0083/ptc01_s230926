@@ -8,8 +8,10 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "allowJs": true,
+    "checkJs": true,
     "skipLibCheck": true,
-    "rootDir": "./"
+    "outDir": "./dist",
+    "rootDir": "./src"
   },
   "include": ["*.ts"],
   "exclude": ["node_modules"]

@@ -1,13 +1,25 @@
+import {describe, expect, test} from '@jest/globals';
 import { sendGetRequest, monitoring_responseJSON, saveInDB, isObjectInSet } from './ptc01_main';
 import { consoleLogger, errorLogger } from './ptc01_logger';
-import { connectDB, disconnectDB, getAllData, saveDataToCandleCollection, saveDataToCandleLogCollection } from './ptc01_db';
+import { connectDB, disconnectDB, getAllData, saveDataToCandleCollection, saveDataToCandleLogCollection } from './services/ptc01_db';
 import { sendSlackNotification } from './ptc01_slack_web_hook';
+import { connectionString } from "./DBconfig";
+const got = require('got');
+// const server = require('./server');
 import axios from 'axios';
 
 jest.mock('axios');
 
+beforeAll(() => {
+    connectDB;
+})
+
+afterAll(() => {
+    disconnectDB;
+})
+
 describe('sendGetRequest', () => {
-    it('fetches candle data from the API', async () => {
+    test('fetches candle data from the API', async () => {
         // Mocked response from the API
         const mockedResponse = [
             {
@@ -51,37 +63,58 @@ describe('sendGetRequest', () => {
                 "start_time": "2023-10-16T02:22:00.000Z", "end_time": "2023-10-16T02:23:00.000Z"
             }
         ];
-        const mongoUser: string = 'dnsever';
-        const mongoUserPw: string = 'dnsever_pw';
-        const connectionString: string = `mongodb://${mongoUser}:${mongoUserPw}@localhost:27017/candle`;
-
-        //DB 연결
-        await connectDB(connectionString);
-      
+        
         // Mock Axios.get to return the mocked response
         (axios.get as jest.Mock).mockResolvedValue({ data: mockedResponse });
 
-        const candleData = await sendGetRequest('2023-10-16T02:13:01.001Z', '2023-10-16T02:23:01.001Z')
+        const candleData = await sendGetRequest('2023-10-16T02:13:01.001Z', '2023-10-16T02:23:01.001Z');
+        
+        expect(candleData).toEqual(mockedResponse);
+
+    });
+});
+
+
+// describe('GET /api/some-endpoint', () => {
+//   test('should respond with 500 Internal Server Error', async () => {
+//     try {
+//       await got.get('http://localhost:3000/api/some-endpoint', {
+//         throwHttpErrors: false, // Prevent GOT from throwing on HTTP error status codes
+//       });
+//     } catch (error:any) {
+//       expect(error.response.statusCode).toBe(500);
+//     }
+//   });
+// });
+    
+describe('sendGetRequestError', () => {
+    test('fetches Error candleData from the API', async () => {
+
+        const candleData = await sendGetRequest('2023-10-16T02:13:01.001Z', '0')
             .then()
             .catch((error) => {
                 let errString = "[requestBatch Error] " + error
-                errorLogger.log(errString);
+                // errorLogger.log(errString);
                 sendSlackNotification(errString);
+                return error.toString();
             });
-        expect(candleData).toEqual(mockedResponse);
-
-        // disconnectDB();
         
+        expect(candleData).toEqual("HTTPError: Response code 400 (Bad Request)");
+
     });
 });
 
 // describe('saveCandleData', () => {
-//   it('saves candle data', async () => {
-//     const candleData = [{ /* mocked candle data */ }];
+//     test('saves candle data', async () => {
+//         const candleData = [{
+//                 "market_id": "BTC-USDT", "open": "27212", "close": "27212", "low": "27212", "high": "27212",
+//                 "base_volume": "0.323327", "quote_volume": "8798.374324",
+//                 "start_time": "2023-10-16T02:15:00.000Z", "end_time": "2023-10-16T02:16:00.000Z"
+//             }];
 
-//     // Mock any saving logic you may have
-//     // For simplicity, we'll just check if the input data matches the output
-//     const savedData = await saveCandleData(candleData);
-//     expect(savedData).toEqual(candleData);
-//   });
+//         // Mock any saving logic you may have
+//         // For simplicity, we'll just check if the input data matches the output
+//         const savedData = await saveDataToCandleCollection(candleData);
+//         expect(savedData._id).toBeDefined();
+//     }, 15000);
 // });

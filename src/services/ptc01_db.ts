@@ -1,32 +1,38 @@
 // import { candleSchema } from "./ptc01_schema";
+// import { candle_data } from "./ptc01_schema";
 
-import { consoleLogger, errorLogger } from "./ptc01_logger";
+import { consoleLogger, errorLogger } from "../ptc01_logger";
 
 // var mongoose = require('mongoose');
 import mongoose, {Schema, Document} from "mongoose";
-// import { candle_data } from "./ptc01_schema";
-const mongoUser: string = 'dnsever';
-const mongoUserPw: string = 'dnsever_pw';
-// const connectionString: string = 'mongodb://' + mongoUser + ':' + mongoUserPw + '@localhost:27017/candles';
-const connectionString: string = `mongodb://${mongoUser}:${mongoUserPw}@localhost:27017/candle`;
+import { connectionString, LogDBconnectionString } from "../DBconfig";
+
 var dbConnectFlag: boolean = false;
 
-let candleDataSet: Set<candle_data> = new Set<candle_data>();
-    
-function connectDB(connectionString:string) {
-    // const dbClient = require('mongodb').MongoClient;
-    mongoose.connect(connectionString);
+// const existingCandleModel = mongoose.models['Candle'];
+// if (existingCandleModel) {
+//   existingCandleModel.deleteOne();
+// }
+// const existingCandleLogModel = mongoose.models['CandleLog'];
+// if (existingCandleLogModel) {
+//   existingCandleLogModel.deleteOne();
+// }
+
+async function connectDB(connectionString: string) {
+    await mongoose.connect(connectionString);
 
     var db = mongoose.connection;
     // 연결 실패
     db.on('error', function () {
         consoleLogger.log('Connection Failed!');
+        process.exit(1);
     });
     // 연결 성공
     db.once('open', function () {
         dbConnectFlag = true;
-        consoleLogger.log('Connected!');
+        consoleLogger.log('Connected MongoDB!');
     });
+
 }
 
 export interface candle_data extends Document{
@@ -37,8 +43,8 @@ export interface candle_data extends Document{
   high: number;
   base_volume: number;
   quote_volume: number;
-  start_time: string;
-  end_time: string;
+  start_time: Date;
+  end_time: Date;
 }
 
 const candleSchema: Schema = new Schema({
@@ -49,13 +55,13 @@ const candleSchema: Schema = new Schema({
     high: { type: Number, required: true },
     base_volume: { type: Number, required: true },
     quote_volume: { type: Number, required: true },
-    start_time: { type: String, required: true },
-    end_time: { type: String, required: true }
+    start_time: { type: Date, required: true },
+    end_time: { type: Date, required: true }
 });
 
 // candleSchema.index({ market_id: 1, start_time: 1, end_time: 1 }, { unique: true });
 
-var candle_data = mongoose.model<candle_data>('Candle', candleSchema);
+var candle_model = mongoose.model<candle_data>('Candle', candleSchema);
 
 interface log_data extends Document{
     log_time: string;
@@ -70,8 +76,9 @@ const LogSchema = new Schema({
 var log_message = mongoose.model<log_data>('CandleLog', LogSchema);
 
 async function saveDataToCandleCollection(cData: any) {
-    await candle_data.create(cData);
+    const savedData = await candle_model.create(cData);
     // consoleLogger.log('Data saved to Collection Candle : ' + data);
+    return savedData;
 }
 async function saveDataToCandleLogCollection(logMessage: string) {
     let date = new Date().toISOString();
@@ -80,31 +87,45 @@ async function saveDataToCandleLogCollection(logMessage: string) {
 }
 
 
-function getAllData() {
+async function getAllData() {
     // consoleLogger.log("getAllData - connectDB ")
     // 레퍼런스 전체 데이터 가져오기
-    candle_data.find().then((candle_data: Object) => {
-        consoleLogger.log('--- Read all ---');
+    try {
+        const All_candle_data = await candle_model.find();
+        return All_candle_data;
+    } catch (error:any) {
+        errorLogger.log(error.toString());
+    }
+    // await candle_model.find().then((candleData: Object) => {
+    //     // consoleLogger.log('--- Read all ---');
 
-        consoleLogger.log(candle_data.toString());
+    //     // consoleLogger.log(candleData.toString());
         
-        // disconnectDB();
-    }).catch((err: Error) => {
-        errorLogger.log(err.toString());
-    });
+    //     // disconnectDB();
+    // }).catch((err: Error) => {
+    //     errorLogger.log(err.toString());
+    // });
+}
 
+async function getRangeData(p_start_time:Date, p_end_time:Date) {
+    try {
+        const Range_candle_data = await candle_model.find({ $and: [{ start_time: { $gte: p_start_time } }, { end_time: { $lte: p_end_time } }] })
+        return Range_candle_data;
+    } catch (error: any) {
+        errorLogger.log(error.toString());
+    }
 }
 
 function disconnectDB() {
     if (dbConnectFlag) {
-        mongoose.disconnect();
+        async () => { await mongoose.disconnect(); }
         consoleLogger.log("Now disconnected!!")
     } else {
         consoleLogger.log("DB is not connected!")
     }
 }
 
-// connectDB();
+// connectDB(connectionString);
 // getAllData();
 
 export {
@@ -112,6 +133,7 @@ export {
     disconnectDB,
     // insertData,
     getAllData,
+    getRangeData,
     saveDataToCandleCollection,
     saveDataToCandleLogCollection
 };

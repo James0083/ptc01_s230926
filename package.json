@@ -2,19 +2,23 @@
   "name": "ptc01_s230926",
   "version": "1.0.0",
   "description": "",
-  "main": "ptc01_s230926.js",
+  "main": "index.js",
   "scripts": {
-    "test": "jest",
-    "got": "ts-node ./http-got-test.ts"
+    "ptc01_Controller": "ts-node src/controllers/ptc01_Controller.ts",
+    "ptc01_main": "ts-node src/ptc01_main.ts",
+    "test": "jest --runInBand --detectOpenHandles",
+    "dev": "nodemon src/index.ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/express": "^4.17.20",
     "@types/got": "^9.6.12",
+    "express": "^4.18.2",
     "got": "^11.8.6",
     "http": "^0.0.1-security",
     "mongodb": "^6.1.0",
-    "mongoose": "^7.6.1",
+    "mongoose": "^7.6.2",
     "node-schedule": "^2.1.1",
     "nodemailer": "^6.9.6",
     "typescript": "^5.2.2"
@@ -26,10 +30,23 @@
     "@types/node-schedule": "^2.1.1",
     "@types/nodemailer": "^6.4.11",
     "jest": "^29.7.0",
+    "nodemon": "^3.0.1",
     "tslib": "^2.6.2"
   },
   "jest": {
     "preset": "ts-jest",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ]
   }
 }

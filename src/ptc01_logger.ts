@@ -1,20 +1,22 @@
-const { connectDB, disconnectDB, insertLog, saveDataToCandleLogCollection } = require('./ptc01_db');
+const { connectDB, disconnectDB, insertLog, saveDataToCandleLogCollection, LogDBconnectionString } = require('./services/ptc01_db');
 
 interface Logger {
   log(message: string): void;
 }
 
 class ConsoleLogger implements Logger {
-  log(message: string): void {
-    console.log(message);
+  async log(message: string) {
+    await console.log(message);
   }
 }
 
 class ErrorLogger implements Logger{
-    log(message: string): void{
-        console.error(message);
-        saveDataToCandleLogCollection(message);
-    }
+  async log(message: string): Promise<void>{
+    console.error(message);
+    connectDB(LogDBconnectionString);
+    await saveDataToCandleLogCollection(message);
+    disconnectDB();
+  }
 }
 
 class FileLogger implements Logger {
