@@ -30,7 +30,7 @@ let cnt: number = 0;
 let retryLeft: number = 3;
 const MAX_RETRIES = 3;
 const RETRY_INTERVALS = [10 * 1000, 20 * 1000, 30 * 1000];
-const BATCH_INTERVAL = 1;
+const BATCH_INTERVAL = 10;
 
 let candleDataSet: Set<candle_data> = new Set<candle_data>();
 let beforeCDataSetSize = 0;
