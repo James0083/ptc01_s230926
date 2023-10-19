@@ -22,6 +22,14 @@
 - [X] 네트워크 오류 발생했을때, 어떤 API에서 오류가 발생했는지 Logging된 정보들은 몽고DB 에 저장.
 - [X] 배치 실행 중 오류가 발생하여 배치 전체가 멈추는 경우, 어떤 코드에서 오류가 발생했는 지 유추할 수 있는 정보를 로그를 통해 남기기. 배치가 멈췄을 경우 알림 기능을 만들기. SMTP, Slack web hook 상관 없음. 
 
+
+### MongoDB Setting
+- user : **dnsever**
+- pw : **dnsever_pw**
+- database name : **candle**
+- candle data collection name : **candles**
+- log data collection name : **candlelogs**
+
 # Running the app
 
 ```bash
