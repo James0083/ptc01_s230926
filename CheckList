@@ -1,0 +1,10 @@
+ptc01_s230926 파일별 기능 정리
+
+* Batch 어플리케이션 : src/ptc01_main
+* 전체 프로젝트 실행 : index.ts
+* REST API 관련 : ptc01_Routes, ptc01_Controller
+* JSON to XML 파싱 : ptc01_parsingData
+* mongoDB 저장 : ptc01_db (ptc01_schema는 관련 없음.)
+* Log Class(로그저장) : ptc01_logger
+* 이슈발생시 Slack web hook 으로 알림 : ptc01_slack_web_hook
+    * ( [ Batch app 실행 -> 에러 —> 슬랙 알림 ](에러시 3번반복) -> 종료
