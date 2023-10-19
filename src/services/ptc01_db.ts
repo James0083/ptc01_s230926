@@ -1,11 +1,11 @@
 // import { candleSchema } from "./ptc01_schema";
 // import { candle_data } from "./ptc01_schema";
 
-import { consoleLogger, errorLogger } from "../ptc01_logger";
+import { consoleLogger, errorLogger } from "./ptc01_logger";
 
 // var mongoose = require('mongoose');
 import mongoose, {Schema, Document} from "mongoose";
-import { connectionString, LogDBconnectionString } from "../DBconfig";
+import { connectionString, LogDBconnectionString } from "./DBconfig";
 
 var dbConnectFlag: boolean = false;
 

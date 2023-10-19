@@ -1,4 +1,4 @@
-const { connectDB, disconnectDB, insertLog, saveDataToCandleLogCollection, LogDBconnectionString } = require('./services/ptc01_db');
+const { connectDB, disconnectDB, insertLog, saveDataToCandleLogCollection, LogDBconnectionString } = require('./ptc01_db');
 
 interface Logger {
   log(message: string): void;

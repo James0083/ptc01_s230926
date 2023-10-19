@@ -1,9 +1,9 @@
 import schedule from 'node-schedule';
 import got from "got";
-import { cache } from './ptc01_cache';
+import { cache } from '../ptc01_cache';
 import { consoleLogger, errorLogger } from './ptc01_logger';
 import { rejects } from 'assert';
-import { candle_data, connectDB, disconnectDB, saveDataToCandleCollection, saveDataToCandleLogCollection } from './services/ptc01_db';
+import { candle_data, connectDB, disconnectDB, saveDataToCandleCollection, saveDataToCandleLogCollection } from './ptc01_db';
 import { sendSlackNotification } from './ptc01_slack_web_hook';
 import { connectionString, LogDBconnectionString } from "./DBconfig";
 // import { parseString } from 'xml2js';
