@@ -18,6 +18,9 @@ var dbConnectFlag: boolean = false;
 //   existingCandleLogModel.deleteOne();
 // }
 
+
+mongoose.set('bufferTimeoutMS', 200000);
+
 async function connectDB(connectionString: string) {
     await mongoose.connect(connectionString);
 
